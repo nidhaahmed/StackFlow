@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 import morgan from "morgan";
 import cors from "cors";
 import mongoose from "mongoose";
-import path from "path";
+import authRoutes from "./routes/authRoutes.js";
 
 // dotenv.config({ path: path.resolve("stackflow-backend/.env") });
 dotenv.config();
@@ -13,6 +13,7 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 app.use(morgan("dev"));
+app.use("/api/auth", authRoutes);
 
 app.get("/", (req, res) => res.send("StackFlow backend running 🚀"));
 
