@@ -1,0 +1,50 @@
+import Milestone from "../models/Milestone.js";
+import Project from "../models/Project.js";
+
+export const createMilestone = async (req, res) => {
+  try {
+    const { title, assignedTo } = req.body;
+    const { projectId } = req.params;
+
+    // Check if project exists
+    const project = await Project.findById(projectId);
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
+    }
+
+    // Create milestone
+    const milestone = await Milestone.create({
+      title,
+      projectId,
+      assignedTo, // tech lead id
+    });
+
+    // Push milestone into project.milestones array
+    project.milestones.push(milestone._id);
+    await project.save();
+
+    res.status(201).json({
+      message: "Milestone created successfully",
+      milestone,
+    });
+  } catch (err) {
+    console.error("Milestone creation error:", err);
+    res.status(500).json({ message: "Server error creating milestone" });
+  }
+};
+
+export const getMilestonesForProject = async (req, res) => {
+  try {
+    const { projectId } = req.params;
+
+    const milestones = await Milestone.find({ projectId }).populate(
+      "assignedTo",
+      "name email role"
+    );
+
+    res.status(200).json({ milestones });
+  } catch (err) {
+    console.error("Fetching milestone error:", err);
+    res.status(500).json({ message: "Server error fetching milestones" });
+  }
+};

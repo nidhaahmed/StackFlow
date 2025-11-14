@@ -1,6 +1,7 @@
 import express from "express";
 import { authenticateToken } from "../middlewares/authenticateToken.js";
 import { authorizeRoles } from "../middlewares/authorizeRoles.js";
+import { createProject, getAllProjects, } from "../controllers/projectController.js";
 
 const router = express.Router();
 
@@ -9,9 +10,7 @@ router.post(
   "/create",
   authenticateToken,
   authorizeRoles("admin"),
-  (req, res) => {
-    res.json({ message: "Project created successfully!" });
-  }
+  createProject
 );
 
 // Techlead or Admin can verify tasks
@@ -33,5 +32,7 @@ router.get(
     res.json({ message: `Welcome ${req.user.role}! Here are your tasks.` });
   }
 );
+
+router.get("/", authenticateToken, getAllProjects);
 
 export default router;

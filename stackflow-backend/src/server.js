@@ -6,6 +6,9 @@ import mongoose from "mongoose";
 import authRoutes from "./routes/authRoutes.js";
 import cookieParser from "cookie-parser";
 import projectRoutes from "./routes/projectRoutes.js";
+import milestoneRoutes from "./routes/milestoneRoutes.js";
+import taskRoutes from "./routes/taskRoutes.js";
+import Project from "./models/Project.js";
 
 // dotenv.config({ path: path.resolve("stackflow-backend/.env") });
 dotenv.config();
@@ -18,9 +21,15 @@ app.use(cookieParser());
 app.use(morgan("dev"));
 app.use("/api/auth", authRoutes);
 app.use("/api/projects", projectRoutes);
+app.use("/api/milestones", milestoneRoutes);
+app.use("/api/tasks", taskRoutes);
 
 app.get("/", (req, res) => res.send("StackFlow backend running 🚀"));
 app.get("/test", (req, res) => res.send("Server is running"));
+app.get("/test-projects", async (req, res) => {
+  const projects = await Project.find();
+  res.json({ count: projects.length });
+});
 
 // MongoDB connection
 mongoose
