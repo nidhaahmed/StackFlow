@@ -140,3 +140,25 @@ export const verifyNextTask = async (req, res) => {
     res.status(500).json({ message: "Server error verifying task" });
   }
 };
+
+export const getQueueStatus = (req, res) => {
+  res.status(200).json({
+    pendingCount: verificationQueue.length,
+    nextTask: verificationQueue[0] || null,
+  });
+};
+
+export const getTaskById = async (req, res) => {
+  try {
+    const task = await Task.findById(req.params.taskId)
+      .populate("assignedTo", "name email")
+      .populate("milestoneId");
+
+    if (!task) return res.status(404).json({ message: "Task not found" });
+
+    res.status(200).json({ task });
+  } catch (err) {
+    console.error("Error fetching task:", err);
+    res.status(500).json({ message: "Server error fetching task" });
+  }
+};

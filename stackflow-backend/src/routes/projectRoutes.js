@@ -1,7 +1,7 @@
 import express from "express";
 import { authenticateToken } from "../middlewares/authenticateToken.js";
 import { authorizeRoles } from "../middlewares/authorizeRoles.js";
-import { createProject, getAllProjects, } from "../controllers/projectController.js";
+import { createProject, getAllProjects, getProjectById } from "../controllers/projectController.js";
 
 const router = express.Router();
 
@@ -31,6 +31,14 @@ router.get(
   (req, res) => {
     res.json({ message: `Welcome ${req.user.role}! Here are your tasks.` });
   }
+);
+
+// Get project by ID with milestones and tasks
+router.get(
+  "/details/:projectId",
+  authenticateToken,
+  authorizeRoles("admin", "techlead", "teammate"),
+  getProjectById
 );
 
 router.get("/", authenticateToken, getAllProjects);

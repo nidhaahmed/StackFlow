@@ -48,3 +48,20 @@ export const getMilestonesForProject = async (req, res) => {
     res.status(500).json({ message: "Server error fetching milestones" });
   }
 };
+
+export const getMilestoneById = async (req, res) => {
+  try {
+    const milestone = await Milestone.findById(req.params.milestoneId)
+      .populate("tasks")
+      .populate("assignedTo", "name email");
+
+    if (!milestone) {
+      return res.status(404).json({ message: "Milestone not found" });
+    }
+
+    res.status(200).json({ milestone });
+  } catch (err) {
+    console.error("Error fetching milestone:", err);
+    res.status(500).json({ message: "Server error fetching milestone" });
+  }
+};

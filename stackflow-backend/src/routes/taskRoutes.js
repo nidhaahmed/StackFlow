@@ -1,7 +1,7 @@
 import express from "express";
 import { authenticateToken } from "../middlewares/authenticateToken.js";
 import { authorizeRoles } from "../middlewares/authorizeRoles.js";
-import { createTask, getTasksForMilestone, completeTask, verifyNextTask } from "../controllers/taskController.js";
+import { createTask, getTasksForMilestone, completeTask, verifyNextTask, getQueueStatus } from "../controllers/taskController.js";
 
 const router = express.Router();
 
@@ -36,5 +36,22 @@ router.post(
   authorizeRoles("techlead"),
   verifyNextTask
 );
+
+// Tech lead views queue status
+router.get(
+  "/queue/status",
+  authenticateToken,
+  authorizeRoles("techlead"),
+  getQueueStatus
+);
+
+// Get task by ID with details
+router.get(
+  "/details/:taskId",
+  authenticateToken,
+  authorizeRoles("admin", "techlead", "teammate"),
+  getTaskById
+);
+
 
 export default router;

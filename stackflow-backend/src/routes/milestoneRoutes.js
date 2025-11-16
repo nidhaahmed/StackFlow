@@ -24,4 +24,12 @@ router.get(
   getMilestonesForProject
 );
 
+// Get milestone by ID with tasks
+router.get(
+  "/details/:milestoneId",
+  authenticateToken,
+  authorizeRoles("admin", "techlead", "teammate"),
+  getMilestoneById
+);
+
 export default router;
