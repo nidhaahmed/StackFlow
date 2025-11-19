@@ -1,6 +1,7 @@
 import Task from "../models/Task.js";
 import Milestone from "../models/Milestone.js";
 import Project from "../models/Project.js";
+import { taskQueue } from "../queues/taskQueue.js";
 
 export const createTask = async (req, res) => {
   try {
@@ -48,8 +49,8 @@ export const getTasksForMilestone = async (req, res) => {
   }
 };
 
-// QUEUE (simple array for now — will replace with Redis later)
-let verificationQueue = [];
+// QUEUE (simple array for now, will replace with Redis later)
+// let verificationQueue = [];
 
 export const completeTask = async (req, res) => {
   try {
@@ -65,15 +66,20 @@ export const completeTask = async (req, res) => {
 
     // Mark task as completed
     task.status = "completed";
-    task.verificationQueue = true;
+    // task.verificationQueue = true;
     await task.save();
 
     // Push ID to queue
-    verificationQueue.push(taskId);
+    // verificationQueue.push(taskId);
+
+    // Push job into Redis queue
+    await taskQueue.add("verifyTask", {
+      taskId: task._id.toString(),
+    });
 
     res.status(200).json({
       message: "Task submitted for verification",
-      queueLength: verificationQueue.length,
+      // queueLength: verificationQueue.length,
     });
 
   } catch (err) {
@@ -82,71 +88,71 @@ export const completeTask = async (req, res) => {
   }
 };
 
-export const verifyNextTask = async (req, res) => {
-  try {
-    if (verificationQueue.length === 0) {
-      return res.status(200).json({ message: "No tasks in queue" });
-    }
+// export const verifyNextTask = async (req, res) => {
+//   try {
+//     if (verificationQueue.length === 0) {
+//       return res.status(200).json({ message: "No tasks in queue" });
+//     }
 
-    // Pop first element (QUEUE: FIFO)
-    const taskId = verificationQueue.shift();
+//     // Pop first element (QUEUE: FIFO)
+//     const taskId = verificationQueue.shift();
 
-    const task = await Task.findById(taskId);
-    if (!task) return res.status(404).json({ message: "Task not found" });
+//     const task = await Task.findById(taskId);
+//     if (!task) return res.status(404).json({ message: "Task not found" });
 
-    const milestone = await Milestone.findById(task.milestoneId);
-    if (!milestone)
-      return res.status(404).json({ message: "Milestone not found" });
+//     const milestone = await Milestone.findById(task.milestoneId);
+//     if (!milestone)
+//       return res.status(404).json({ message: "Milestone not found" });
 
-    // Ensure tech lead assigned to milestone
-    if (milestone.assignedTo.toString() !== req.user.id) {
-      return res
-        .status(403)
-        .json({ message: "Not authorized to verify this task" });
-    }
+//     // Ensure tech lead assigned to milestone
+//     if (milestone.assignedTo.toString() !== req.user.id) {
+//       return res
+//         .status(403)
+//         .json({ message: "Not authorized to verify this task" });
+//     }
 
-    // Update task status
-    task.status = "verified";
-    task.verificationQueue = false;
-    await task.save();
+//     // Update task status
+//     task.status = "verified";
+//     task.verificationQueue = false;
+//     await task.save();
 
-    // Update Milestone progress
-    const totalTasks = milestone.tasks.length;
-    const verifiedTasks = await Task.countDocuments({
-      milestoneId: milestone._id,
-      status: "verified",
-    });
+//     // Update Milestone progress
+//     const totalTasks = milestone.tasks.length;
+//     const verifiedTasks = await Task.countDocuments({
+//       milestoneId: milestone._id,
+//       status: "verified",
+//     });
 
-    milestone.progress = Math.round((verifiedTasks / totalTasks) * 100);
-    await milestone.save();
+//     milestone.progress = Math.round((verifiedTasks / totalTasks) * 100);
+//     await milestone.save();
 
-    // Update Project progress
-    const project = await Project.findById(milestone.projectId);
-    const milestones = await Milestone.find({ projectId: project._id });
+//     // Update Project progress
+//     const project = await Project.findById(milestone.projectId);
+//     const milestones = await Milestone.find({ projectId: project._id });
 
-    let sum = 0;
-    milestones.forEach((m) => (sum += m.progress));
-    project.progress = Math.round(sum / milestones.length);
-    await project.save();
+//     let sum = 0;
+//     milestones.forEach((m) => (sum += m.progress));
+//     project.progress = Math.round(sum / milestones.length);
+//     await project.save();
 
-    res.status(200).json({
-      message: "Task verified successfully",
-      verifiedTask: taskId,
-      milestoneProgress: milestone.progress,
-      projectProgress: project.progress,
-    });
-  } catch (err) {
-    console.error("Task verification error:", err);
-    res.status(500).json({ message: "Server error verifying task" });
-  }
-};
+//     res.status(200).json({
+//       message: "Task verified successfully",
+//       verifiedTask: taskId,
+//       milestoneProgress: milestone.progress,
+//       projectProgress: project.progress,
+//     });
+//   } catch (err) {
+//     console.error("Task verification error:", err);
+//     res.status(500).json({ message: "Server error verifying task" });
+//   }
+// };
 
-export const getQueueStatus = (req, res) => {
-  res.status(200).json({
-    pendingCount: verificationQueue.length,
-    nextTask: verificationQueue[0] || null,
-  });
-};
+// export const getQueueStatus = (req, res) => {
+//   res.status(200).json({
+//     pendingCount: verificationQueue.length,
+//     nextTask: verificationQueue[0] || null,
+//   });
+// };
 
 export const getTaskById = async (req, res) => {
   try {
