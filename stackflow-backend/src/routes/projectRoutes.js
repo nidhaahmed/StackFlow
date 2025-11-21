@@ -2,6 +2,8 @@ import express from "express";
 import { authenticateToken } from "../middlewares/authenticateToken.js";
 import { authorizeRoles } from "../middlewares/authorizeRoles.js";
 import { createProject, getAllProjects, getProjectById } from "../controllers/projectController.js";
+import { checkOrgAccess } from "../middlewares/checkOrgAccess.js";
+import Project from "../models/Project.js";
 
 const router = express.Router();
 
@@ -38,6 +40,7 @@ router.get(
   "/details/:projectId",
   authenticateToken,
   authorizeRoles("admin", "techlead", "teammate"),
+  checkOrgAccess(Project),
   getProjectById
 );
 

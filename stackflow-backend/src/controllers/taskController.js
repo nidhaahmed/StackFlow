@@ -17,6 +17,7 @@ export const createTask = async (req, res) => {
       title,
       milestoneId,
       assignedTo, // teammate user id
+      orgId: req.user.orgId,
     });
 
     // Add task to milestone
@@ -37,7 +38,10 @@ export const getTasksForMilestone = async (req, res) => {
   try {
     const { milestoneId } = req.params;
 
-    const tasks = await Task.find({ milestoneId }).populate(
+    const tasks = await Task.find({ 
+      milestoneId,
+      orgId: req.user.orgId 
+    }).populate(
       "assignedTo",
       "name email role"
     );
@@ -59,12 +63,10 @@ export const completeTask = async (req, res) => {
     const task = await Task.findById(taskId);
     if (!task) return res.status(404).json({ message: "Task not found" });
 
-    // Only assigned teammate can complete
     if (task.assignedTo.toString() !== req.user.id) {
       return res.status(403).json({ message: "You are not assigned to this task" });
     }
 
-    // Mark task as completed
     task.status = "completed";
     // task.verificationQueue = true;
     await task.save();
@@ -75,6 +77,14 @@ export const completeTask = async (req, res) => {
     // Push job into Redis queue
     await taskQueue.add("verifyTask", {
       taskId: task._id.toString(),
+    }, {
+      attempts: 3,
+      backoff: {
+        type: "exponential", // Automatic retry with exponential backoff
+        delay: 2000,
+      },
+      removeOnFail: false, // DLQ capture failed jobs
+      delay: 3000, // 3 seconds delay before processing
     });
 
     res.status(200).json({

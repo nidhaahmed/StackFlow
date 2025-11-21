@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 const milestoneSchema = new mongoose.Schema(
   {
     title: { type: String, required: true },
+    orgId: { type: mongoose.Schema.Types.ObjectId, ref: "Organization" },
     projectId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Project",

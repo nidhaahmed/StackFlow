@@ -11,6 +11,7 @@ export const createProject = async (req, res) => {
       name,
       description,
       createdBy,
+      orgId: req.user.orgId,
     });
 
     res.status(201).json({
@@ -27,9 +28,11 @@ export const createProject = async (req, res) => {
 
 export const getAllProjects = async (req, res) => {
   try {
-    const projects = await Project.find()
+    const projects = await Project.find({
+      orgId: req.user.orgId,
+    })
       .populate("createdBy", "name email role")
-      .populate("milestones"); // ✅ will now work fine
+      .populate("milestones");
 
     res.status(200).json({ projects });
   } catch (err) {

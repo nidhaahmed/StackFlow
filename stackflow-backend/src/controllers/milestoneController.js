@@ -17,6 +17,7 @@ export const createMilestone = async (req, res) => {
       title,
       projectId,
       assignedTo, // tech lead id
+      orgId: req.user.orgId,
     });
 
     // Push milestone into project.milestones array
@@ -37,7 +38,9 @@ export const getMilestonesForProject = async (req, res) => {
   try {
     const { projectId } = req.params;
 
-    const milestones = await Milestone.find({ projectId }).populate(
+    const milestones = await Milestone.find({ 
+      projectId, orgId: req.user.orgId 
+    }).populate(
       "assignedTo",
       "name email role"
     );

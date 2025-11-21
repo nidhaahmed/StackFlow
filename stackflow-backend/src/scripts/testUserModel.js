@@ -14,16 +14,13 @@ const run = async () => {
       useUnifiedTopology: true,
     });
     console.log("Connected to MongoDB");
-
-    // Create a temporary test user (DO NOT use a real password here)
     const temp = await User.create({
       name: "Test User",
-      email: `testuser_${Date.now()}@example.com`,
-      password: "plain-text-for-test-only",
+      email: `dummy${Date.now()}@example.com`,
+      password: "dummy",
     });
 
     console.log("Created test user id:", temp._id);
-    // Clean up
     await User.deleteOne({ _id: temp._id });
     console.log("Cleaned up test user");
   } catch (err) {

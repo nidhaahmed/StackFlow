@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 const taskSchema = new mongoose.Schema(
   {
     title: { type: String, required: true },
+    orgId: { type: mongoose.Schema.Types.ObjectId, ref: "Organization" },
     milestoneId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Milestone",

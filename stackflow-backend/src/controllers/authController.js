@@ -1,7 +1,7 @@
-// src/controllers/authController.js
 import User from "../models/User.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import Organization from "../models/Organization.js";
 // import { generateAccessToken, generateRefreshToken } from "../utils/tokens.js";
 
 export const register = async (req, res) => {
@@ -25,10 +25,24 @@ export const register = async (req, res) => {
       role,
     });
 
-    // 4. Send response
+    // 4. Create organization for the user
+    if (role === "admin") {
+     const inviteCode = Math.random().toString(36).substring(2, 10);
+     const org = await Organization.create({
+       name: `${name}'s Organization`,
+       createdBy: user._id,
+       inviteCode,
+       members: [user._id],
+       isPaid: false,
+     });
+     user.orgId = org._id;
+     await user.save();
+     }
+
+    // 5. Send response
     res.status(201).json({
       message: "User registered successfully",
-      user: { id: user._id, name: user.name, email: user.email, role: user.role },
+      user: { id: user._id, name: user.name, email: user.email, orgId: user.orgId, role: user.role },
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -50,7 +64,7 @@ export const loginUser = async (req, res) => {
 
     // 3️⃣ Generate Access Token (short-lived)
     const accessToken = jwt.sign(
-      { id: user._id, role: user.role },
+      { id: user._id, role: user.role, orgId: user.orgId },
       process.env.ACCESS_SECRET,
       { expiresIn: "15m" }
     );
@@ -81,6 +95,7 @@ export const loginUser = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
+        orgId: user.orgId,
         role: user.role,
       },
     });

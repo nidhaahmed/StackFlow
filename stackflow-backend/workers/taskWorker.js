@@ -69,7 +69,7 @@ const worker = new Worker(
     return { taskId };
   },
 
-  { connection }
+  { connection, concurrency: 5 } // Process up to 5 jobs concurrently
 );
 
 // Worker event listeners

@@ -9,6 +9,7 @@ const projectSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    orgId: { type: mongoose.Schema.Types.ObjectId, ref: "Organization" },
     milestones: [
       {
         type: mongoose.Schema.Types.ObjectId,
