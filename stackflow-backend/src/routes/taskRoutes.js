@@ -1,7 +1,15 @@
 import express from "express";
 import { authenticateToken } from "../middlewares/authenticateToken.js";
 import { authorizeRoles } from "../middlewares/authorizeRoles.js";
-import { createTask, getTasksForMilestone, completeTask, getTaskById } from "../controllers/taskController.js";
+import {
+  createTask,
+  getTasksForMilestone,
+  completeTask,
+  getTaskById,
+  verifyTask,
+  unverifyTask,
+  undoCompleteTask,
+} from "../controllers/taskController.js";
 import { checkOrgAccess } from "../middlewares/checkOrgAccess.js";
 import Task from "../models/Task.js";
 
@@ -32,21 +40,29 @@ router.post(
   completeTask
 );
 
-// // Tech lead verifies next queued task
-// router.post(
-//   "/verify/next",
-//   authenticateToken,
-//   authorizeRoles("techlead"),
-//   verifyNextTask
-// );
+// Techlead verifies task
+router.post(
+  "/verify/:taskId",
+  authenticateToken,
+  authorizeRoles("techlead"),
+  verifyTask
+);
 
-// // Tech lead views queue status
-// router.get(
-//   "/queue/status",
-//   authenticateToken,
-//   authorizeRoles("techlead"),
-//   getQueueStatus
-// );
+// Techlead unverifies task
+router.post(
+  "/unverify/:taskId",
+  authenticateToken,
+  authorizeRoles("techlead"),
+  unverifyTask
+);
+
+// Teammate undoes completed task
+router.post(
+  "/undo-complete/:taskId",
+  authenticateToken,
+  authorizeRoles("teammate"),
+  undoCompleteTask
+);
 
 // Get task by ID with details
 router.get(

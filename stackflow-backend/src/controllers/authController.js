@@ -6,7 +6,7 @@ import Organization from "../models/Organization.js";
 
 export const register = async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, password, role, inviteCode } = req.body;
 
     // 1. Check if user already exists
     const existing = await User.findOne({ email });
@@ -27,22 +27,49 @@ export const register = async (req, res) => {
 
     // 4. Create organization for the user
     if (role === "admin") {
-     const inviteCode = Math.random().toString(36).substring(2, 10);
-     const org = await Organization.create({
-       name: `${name}'s Organization`,
-       createdBy: user._id,
-       inviteCode,
-       members: [user._id],
-       isPaid: false,
-     });
-     user.orgId = org._id;
-     await user.save();
-     }
+      const inviteCode = Math.random().toString(36).substring(2, 10);
+      const org = await Organization.create({
+        name: `${name}'s Organization`,
+        createdBy: user._id,
+        inviteCode,
+        members: [user._id],
+        isPaid: false,
+      });
+      user.orgId = org._id;
+      await user.save();
+    }
 
+    // If techlead or teammate, attach to org using invite code
+    if (role !== "admin") {
+      if (!inviteCode) {
+        return res.status(400).json({ message: "Invite code is required" });
+      }
+
+      const org = await Organization.findOne({ inviteCode });
+
+      if (!org) {
+        return res.status(400).json({ message: "Invalid invite code" });
+      }
+
+      user.orgId = org._id;
+      await user.save();
+
+      if (!org.members.includes(user._id)) {
+        org.members.push(user._id);
+        await org.save();
+      }
+    }
+    
     // 5. Send response
     res.status(201).json({
       message: "User registered successfully",
-      user: { id: user._id, name: user.name, email: user.email, orgId: user.orgId, role: user.role },
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        orgId: user.orgId,
+        role: user.role,
+      },
     });
   } catch (err) {
     res.status(500).json({ message: err.message });

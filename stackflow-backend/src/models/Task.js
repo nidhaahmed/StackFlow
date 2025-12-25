@@ -19,10 +19,6 @@ const taskSchema = new mongoose.Schema(
       enum: ["pending", "completed", "verified"],
       default: "pending",
     },
-    verificationQueue: {
-      type: Boolean,
-      default: false, // true if waiting for Tech Lead verification
-    },
   },
   { timestamps: true }
 );

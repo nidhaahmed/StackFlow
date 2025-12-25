@@ -18,7 +18,12 @@ console.log("DB_URI:", process.env.DB_URI);
 
 const app = express();
 app.use(express.json());
-app.use(cors());
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  })
+);
 
 app.use(cookieParser());
 app.use(morgan("dev"));
@@ -43,3 +48,6 @@ mongoose
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+// const calling_domain = window.location.hostname;
+// if(hostname )
