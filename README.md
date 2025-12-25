@@ -1,145 +1,274 @@
-# StackFlow — Workflow Automation Platform (MERN + RBAC + REST Queue Engine)
+# StackFlow
 
-StackFlow is a role-based workflow automation backend for small teams and organizations. It handles project planning, milestone tracking, task assignment, verification queues, and auto-updated progress. This is a full workflow engine (not a simple CRUD demo).
+A full-featured workflow automation platform with project management, role-based access control, and task verification queues. Built with MERN stack (MongoDB, Express, React, Node.js).
 
-## Features
+## What StackFlow Does
 
-### Authentication & Authorization
-- Secure registration/login with bcrypt
-- JWT-based access control:
-    - Access tokens: short-lived (e.g., 15 min)
-    - Refresh tokens: long-lived (e.g., 7 days) stored in DB + HttpOnly cookie
-- Secure logout (DB + cookie invalidation)
-- Role-Based Access Control (RBAC): Admin, Tech Lead, Teammate
+StackFlow is a complete project management and workflow automation system designed for small teams and organizations. It enables teams to:
 
-### Project Management Engine
-- Admins create and manage projects
-- Projects contain milestones; milestones contain tasks
-- Automatic tracking of:
-    - Verified tasks
-    - Milestone completion %
-    - Overall project progress %
+- **Organize work hierarchically** — Create projects, break them into milestones, and assign individual tasks
+- **Manage roles and permissions** — Admin, Tech Lead, and Teammate roles with specific access controls
+- **Track progress automatically** — Real-time progress updates cascade from tasks to milestones to projects
+- **Verify work quality** — Tasks enter a verification queue where Tech Leads review and approve completed work
+- **Control task workflow** — Tasks progress through pending → completed → verified states
 
-### Workflow Queue System (REST-Based)
-- Teammates mark tasks as completed → tasks enter a verification queue (FIFO)
-- Tech Leads verify tasks → status moves to verified
-- Automatic cascade updates: task → milestone progress → project progress
-- REST-based polling endpoints for queue status and entity details
+## Key Features
 
-### Progress Metrics
-- Milestone stores % based on verified tasks
-- Project computes overall progress across milestones
-- All accessible via REST endpoints
+### 🔐 Authentication & Authorization
 
-### Architecture & Extensibility
-- Clean, modular backend (controllers, models, routes)
-- Environment-based config
-- Designed to extend with Redis, Stripe, CI/CD
+- Secure JWT-based authentication with short-lived access tokens and long-lived refresh tokens
+- HttpOnly cookie support for enhanced security
+- Role-Based Access Control (RBAC) with Admin, Tech Lead, and Teammate roles
+- Secure logout with token invalidation
+
+### 📊 Project Management
+
+- Hierarchical organization: Projects → Milestones → Tasks
+- Create and manage projects with descriptions
+- Organize work into milestones assigned to Tech Leads
+- Assign specific tasks to team members
+- Real-time progress tracking at all levels
+
+### ✅ Workflow Queue System
+
+- REST-based task verification queue (FIFO)
+- Teammates mark tasks as completed
+- Tech Leads verify tasks through a centralized queue
+- Automatic progress updates cascade through the hierarchy
+- Polling endpoints for real-time status tracking
+
+### 📈 Progress Tracking
+
+- Automatic milestone progress calculation based on verified tasks
+- Project-level progress aggregated from all milestones
+- Real-time status updates via REST endpoints
 
 ## Tech Stack
-- Node.js
-- Express.js
-- MongoDB + Mongoose
-- JWT Authentication (Access + Refresh tokens)
-- HTTP-only cookies
-- REST queue system
-- Optional: Redis (BullMQ), Stripe, CI/CD
 
-## Authentication Flow
-- User registers with name, email, password, role
-- Login returns access token (short-lived) and refresh token (stored in DB + HttpOnly cookie)
-- Protected routes require `Authorization: Bearer <access_token>`
-- When access token expires, call `/api/auth/refresh` to obtain a new access token
-- Logout clears refresh token from DB and cookie
+**Backend:**
 
-## Entities & Relationships
-- User
-    - Roles: admin, techlead, teammate
-- Project
-    - createdBy (Admin)
-    - milestones []
-    - progress %
-- Milestone
-    - assignedTo (Tech Lead)
-    - tasks []
-    - progress %
-- Task
-    - assignedTo (Teammate)
-    - status: pending → completed → verified
-    - verificationQueue flag
+- Node.js with Express.js
+- MongoDB with Mongoose ODM
+- JWT for authentication
+- Redis BullMQ for optional async job processing
 
-## Queue Workflow (REST-Based)
-1. Teammate completes task
-     - POST /api/tasks/complete/:taskId
-     - Task enters verification queue
-2. Tech Lead verifies next task
-     - POST /api/tasks/verify/next
-     - Updates task status, milestone progress, project progress
-3. Polling APIs (frontend polls every few seconds)
-     - GET /api/tasks/queue/status
-     - GET /api/projects/details/:projectId
-     - GET /api/milestones/details/:milestoneId
-     - GET /api/tasks/details/:taskId
+**Frontend:**
 
-## API Endpoints Overview
+- React 19 with TypeScript
+- Vite for fast development
+- React Router for navigation
+- TailwindCSS + shadcn/ui for styling
+- Zod for form validation
+- Axios for API requests
 
-Auth
-- POST /api/auth/register — Create user
-- POST /api/auth/login — Login user
-- POST /api/auth/logout — Logout user
-- GET  /api/auth/refresh — Refresh access token
+## Getting Started
 
-Projects
-- POST /api/projects/create — (admin) Create project
-- GET  /api/projects — List projects
-- GET  /api/projects/details/:projectId — Full project info
+### Prerequisites
 
-Milestones
-- POST /api/milestones/create/:projectId — (admin/techlead) Add milestone
-- GET  /api/milestones/:projectId — Get milestones
-- GET  /api/milestones/details/:milestoneId — Milestone details
+- Node.js 18+ and npm
+- MongoDB instance (local or cloud)
+- Redis (optional, for advanced queue features)
 
-Tasks
-- POST /api/tasks/create/:milestoneId — (techlead) Add task
-- POST /api/tasks/complete/:taskId — (teammate) Complete task
-- POST /api/tasks/verify/next — (techlead) Verify next task
-- GET  /api/tasks/:milestoneId — List tasks
-- GET  /api/tasks/details/:taskId — Task details
-- GET  /api/tasks/queue/status — (techlead) Queue status
+### Installation
 
-## Installation & Setup
+1. **Clone the repository**
 
-1. Clone repository
-```bash
-git clone https://github.com/yourname/stackflow.git
-cd stackflow-backend
-```
+   ```bash
+   git clone https://github.com/yourusername/stackflow.git
+   cd stackflow
+   ```
 
-2. Install packages
-```bash
-npm install
-```
+2. **Install backend dependencies**
 
-3. Add .env
-```
-MONGO_URI=your_mongodb_url
-ACCESS_SECRET=secret
-REFRESH_SECRET=secret
+   ```bash
+   cd stackflow-backend
+   npm install
+   ```
+
+3. **Install frontend dependencies**
+   ```bash
+   cd ../stackflow-frontend
+   npm install
+   ```
+
+### Configuration
+
+Create `.env` file in `stackflow-backend/` directory:
+
+```env
+# Database
+DB_URI=mongodb://localhost:27017/stackflow
+
+# JWT Secrets
+ACCESS_SECRET=your_access_token_secret_here
+REFRESH_SECRET=your_refresh_token_secret_here
+
+# Server
 PORT=5000
+
+# Frontend URL (for CORS)
+FRONTEND_URL=http://localhost:5173
 ```
 
-4. Run server
+### Running the Application
+
+**Start the backend server:**
+
 ```bash
+cd stackflow-backend
 npm run dev
 ```
 
+Server will run on `http://localhost:5000`
+
+**In another terminal, start the frontend:**
+
+```bash
+cd stackflow-frontend
+npm run dev
+```
+
+Frontend will run on `http://localhost:5173`
+
+### Usage
+
+1. **Register an account** — Navigate to `/register` and create a user account
+2. **Login** — Use your credentials to access the dashboard
+3. **Create a project** — (Admin role) Create a new project from the projects page
+4. **Add milestones** — Break your project into milestones
+5. **Create tasks** — Assign specific tasks to team members
+6. **Complete and verify** — Team members complete tasks, tech leads verify through the queue
+
+## API Overview
+
+### Authentication Endpoints
+
+```
+POST   /api/auth/register      — Create a new user account
+POST   /api/auth/login         — Authenticate and receive tokens
+POST   /api/auth/logout        — Invalidate tokens and logout
+GET    /api/auth/refresh       — Refresh access token
+```
+
+### Project Endpoints
+
+```
+POST   /api/projects/create    — Create a new project (Admin)
+GET    /api/projects           — List all projects
+GET    /api/projects/details/:projectId — Get project details with progress
+```
+
+### Milestone Endpoints
+
+```
+POST   /api/milestones/create/:projectId — Add milestone to project
+GET    /api/milestones/:projectId — List milestones in project
+GET    /api/milestones/details/:milestoneId — Get milestone details
+```
+
+### Task Endpoints
+
+```
+POST   /api/tasks/create/:milestoneId — Create task in milestone (Tech Lead)
+GET    /api/tasks/:milestoneId — List tasks in milestone
+GET    /api/tasks/details/:taskId — Get task details
+POST   /api/tasks/complete/:taskId — Mark task as completed (Teammate)
+POST   /api/tasks/verify/next — Verify next task in queue (Tech Lead)
+GET    /api/tasks/queue/status — Check verification queue status
+```
+
+## Project Structure
+
+```
+stackflow/
+├── stackflow-backend/          # Node.js/Express backend
+│   └── src/
+│       ├── models/             # MongoDB schemas
+│       ├── controllers/        # Route handlers
+│       ├── routes/             # API route definitions
+│       ├── middlewares/        # Auth & authorization
+│       ├── queues/             # Queue system setup
+│       └── server.js           # Express app entry point
+├── stackflow-frontend/         # React TypeScript frontend
+│   └── src/
+│       ├── components/         # Reusable UI components
+│       ├── pages/              # Route pages
+│       ├── layouts/            # Page layouts
+│       └── utils/              # Helper functions
+└── README.md                   # This file
+```
+
+## Role-Based Access Control
+
+| Role          | Permissions                                                                |
+| ------------- | -------------------------------------------------------------------------- |
+| **Admin**     | Create projects, manage organization, create milestones, view all tasks    |
+| **Tech Lead** | Create tasks, assign tasks, verify tasks in queue, view milestone progress |
+| **Teammate**  | Complete assigned tasks, view task details                                 |
+
+## Development
+
+### Backend Development
+
+```bash
+cd stackflow-backend
+npm run dev  # Runs with nodemon for auto-reload
+npm start    # Run without auto-reload
+```
+
+### Frontend Development
+
+```bash
+cd stackflow-frontend
+npm run dev      # Start Vite dev server
+npm run build    # Build for production
+npm run lint     # Run ESLint
+```
+
 ## Future Enhancements
-- Redis-based async engine (BullMQ)
-- Stripe billing integration
-- Multi-tenant organizations
-- React dashboards
-- CI/CD with GitHub Actions
-- WebSocket real-time support
+
+- [ ] Real-time updates with WebSocket (Socket.io)
+- [ ] Redis-based async job processing (BullMQ integration)
+- [ ] Stripe billing and subscription management
+- [ ] Multi-tenant organizations with custom workspaces
+- [ ] Advanced analytics and reporting dashboards
+- [ ] CI/CD integration with GitHub Actions
+- [ ] Email notifications for task assignments
+- [ ] File attachments and comments on tasks
+- [ ] Gantt chart timeline visualization
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
+
+### How to Contribute
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## Support
+
+For help and support:
+
+- **Issues** — Report bugs and request features via [GitHub Issues](https://github.com/yourusername/stackflow/issues)
+- **Documentation** — Check the [project documentation](./docs) for detailed guides
+- **Questions** — Open a discussion for general questions and feedback
+
+## License
+
+This project is licensed under the ISC License — see the LICENSE file for details.
 
 ## Author
-Nidha Ahmed Mohammad — AI & DS Engineer | Workflow Automation | MERN Stack | Backend Engineering
+
+**Nidha Ahmed Mohammad**
+
+- AI & Data Science Engineer
+- Workflow Automation & MERN Stack Specialist
+- Backend Engineering & System Design
+
+---
+
+**Last Updated:** December 2025
