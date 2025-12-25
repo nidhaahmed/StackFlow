@@ -9,6 +9,7 @@ import {
   verifyTask,
   unverifyTask,
   undoCompleteTask,
+  deleteTask,
 } from "../controllers/taskController.js";
 import { checkOrgAccess } from "../middlewares/checkOrgAccess.js";
 import Task from "../models/Task.js";
@@ -72,6 +73,8 @@ router.get(
   checkOrgAccess(Task),
   getTaskById
 );
+
+router.delete("/tasks/:taskId", authenticateToken, authorizeRoles("techlead", "admin"), checkOrgAccess(Task), deleteTask);
 
 
 export default router;

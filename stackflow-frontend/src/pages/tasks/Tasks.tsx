@@ -5,6 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import CreateTaskModal from "./components/CreateTaskModal";
 import { useNavigate } from "react-router-dom";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+import { MoreVertical } from "lucide-react";
 
 interface Task {
   _id: string;
@@ -57,6 +64,12 @@ export default function Tasks() {
   // techlead unverify
   const unverifyTask = async (taskId: string) => {
     await API.post(`/tasks/unverify/${taskId}`);
+    fetchTasks();
+  };
+
+  // techlead/admin delete
+  const deleteTask = async (taskId: string) => {
+    await API.delete(`/tasks/${taskId}`);
     fetchTasks();
   };
 
@@ -139,6 +152,28 @@ export default function Tasks() {
                     Verified
                   </p>
                 )}
+                <div className="flex items-center gap-2">
+                  {/* three dots menu */}
+                  {(role === "techlead" || role === "admin") && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger onClick={(e) => e.stopPropagation()}>
+                        <MoreVertical className="cursor-pointer" />
+                      </DropdownMenuTrigger>
+
+                      <DropdownMenuContent>
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteTask(t._id);
+                          }}
+                          className="text-red-600"
+                        >
+                          Delete Task
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>

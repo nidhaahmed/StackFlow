@@ -111,7 +111,20 @@ export const completeTask = async (req, res) => {
 
 export const getTaskById = async (req, res) => {
   try {
-    const task = await Task.findById(req.params.taskId);
+    const task = await Task.findById(req.params.taskId)
+      .populate("assignedTo", "name email")
+      .populate({
+        path: "milestoneId",
+        select: "title progress projectId",
+        populate: {
+          path: "projectId",
+          select: "name description orgId",
+          populate: {
+            path: "orgId",
+            select: "name admin",
+          },
+        },
+      });
     if (!task) return res.status(404).json({ message: "Task not found" });
 
     res.status(200).json({ task });
@@ -203,3 +216,30 @@ async function updateMilestoneProgress(milestoneId) {
     total === 0 ? 0 : Math.round((verifiedCount / total) * 100);
   await milestone.save();
 }
+
+export const deleteTask = async (req, res) => {
+  try {
+   const { taskId } = req.params;
+   const task = await Task.findById(taskId);
+    if (!task) return res.status(404).json({ message: "Task not found" });
+
+    // only techlead or admin can delete
+    if (req.user.role !== "techlead" && req.user.role !== "admin") {
+      return res
+        .status(403)
+        .json({ message: "Only techlead/admin can delete" });
+    }
+
+    // remove from milestone.tasks array
+    await Milestone.findByIdAndUpdate(task.milestoneId, {
+      $pull: { tasks: taskId },
+    });
+
+    await Task.findByIdAndDelete(taskId);
+
+    res.json({ message: "Task deleted successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error deleting task" });
+  }
+};

@@ -1,5 +1,6 @@
 import Organization from "../models/Organization.js";
 import User from "../models/User.js";
+import jwt from "jsonwebtoken";
 
 export const joinOrganization = async (req, res) => {
   try {
@@ -10,17 +11,37 @@ export const joinOrganization = async (req, res) => {
 
     const user = await User.findById(req.user.id);
 
-    // Update user's organization
     user.orgId = org._id;
     await user.save();
 
-    // Add user to organization members
     if (!org.members.includes(user._id)) {
       org.members.push(user._id);
       await org.save();
     }
 
-    res.status(200).json({ message: "Joined organization", org });
+    // same style as register/login
+    const accessToken = jwt.sign(
+      {
+        id: user._id,
+        email: user.email,
+        orgId: user.orgId,
+        role: user.role,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "2d" }
+    );
+
+    res.status(200).json({
+      message: "Joined organization",
+      accessToken,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        orgId: user.orgId,
+      },
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
